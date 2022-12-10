@@ -1,0 +1,50 @@
+plugins {
+    id 'java'
+}
+
+group 'org.example'
+version '1.0-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation("io.netty:netty-tcnative-boringssl-static:2.0.54.Final") {
+        artifact {
+            classifier = "linux-x86_64"
+        }
+    }
+    implementation(libs.netty.tcnative.boringssl) {
+        artifact {
+            classifier = "windows-x86_64"
+        }
+    }
+}
+
+configurations {
+    customDeps
+}
+
+task copyAndPrintDependencies {
+    doLast {
+        configurations.each { cfg ->
+            {
+                cfg.dependencies.each { dep ->
+                    // The classifier defined with the version catalog (libs.netty.tcnative.boringssl) is
+                    // ignored and only module name and version are copied.
+                    // This regression is produced in Gradle 7.6 and Gradle 7.5.1 and lower versions work
+                    // correctly.
+                    project.dependencies.add("customDeps", dep)
+                }
+            }
+        }
+        configurations.customDeps.resolve().each {
+            println(it)
+        }
+    }
+}
+
+test {
+    useJUnitPlatform()
+}
